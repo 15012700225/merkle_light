@@ -17,7 +17,7 @@ use typenum::marker_traits::Unsigned;
 use crate::hash::Algorithm;
 use crate::merkle::{get_merkle_tree_row_count, log2_pow2, next_pow2, Element};
 
-use qiniu::service::storage::download::RangeReader;
+use third_party_stores::service::storage::download::RangeReader;
 
 use std::collections::HashMap;
 
@@ -47,7 +47,7 @@ pub use vec::VecStore;
 #[derive(Debug)]
 pub struct MixReader {
     file: Option<std::fs::File>,
-    qiniu: Option<RangeReader>,
+    third_party_stores: Option<RangeReader>,
 }
 
 #[allow(unsafe_code)]
@@ -114,7 +114,7 @@ impl ExternalReader<MixReader> {
 
         let reader = MixReader {
             file: _f,
-            qiniu: None,
+            third_party_stores: None,
         };
 
         Ok(ExternalReader {
@@ -287,7 +287,7 @@ pub trait Store<E: Element>: std::fmt::Debug + Send + Sync + Sized {
         _config: StoreConfig,
         _post: bool,
     ) -> Result<Self> {
-        unimplemented!("Only use in qiniu level cache");
+        unimplemented!("Only use in third_party_stores level cache");
     }
     /// Creates a new store which can store up to `size` elements.
     fn new_with_config(size: usize, branches: usize, config: StoreConfig) -> Result<Self>;
@@ -308,7 +308,7 @@ pub trait Store<E: Element>: std::fmt::Debug + Send + Sync + Sized {
         _config: &StoreConfig,
         _post: bool,
     ) -> Result<Self> {
-        unimplemented!("Only use in qiniu level cache");
+        unimplemented!("Only use in third_party_stores level cache");
     }
     fn new_from_disk(size: usize, branches: usize, config: &StoreConfig) -> Result<Self>;
 

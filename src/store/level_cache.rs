@@ -21,8 +21,7 @@ use crate::merkle::{
 };
 use crate::store::{ExternalReader, Store, StoreConfig, BUILD_CHUNK_NODES};
 
-use qiniu::service::storage::download::{qiniu_is_enable, reader_from_env};
-
+use third_party_stores::service::storage::download::{qiniu_is_enable, sds_is_enable, reader_from_env};
 use log::{trace, debug, warn};
 
 use std::collections::HashMap;
@@ -43,10 +42,10 @@ impl MixFile {
         Path::new(&path).exists()
     }
 
-    fn qiniu_open(path: &str, len: usize) -> std::io::Result<MixFile> {
+    fn third_party_stores_open(path: &str, len: usize) -> std::io::Result<MixFile> {
         let r = reader_from_env(path).unwrap().read_last_bytes(len)?;
-        trace!("read qiniu open {} {}", path, len);
-        trace!("qiniu data {} {}", &r.1[0], &r.1[len - 1]);
+        trace!("read  third_party_stores open {} {}", path, len);
+        trace!("third_party_stores data {} {}", &r.1[0], &r.1[len - 1]);
         return Ok(MixFile {
             file: None,
             path: Some(path.to_string()),
@@ -303,7 +302,7 @@ impl<E: Element, R: Read + Send + Sync> Store<E> for LevelCacheStore<E, R> {
             return Self::new_from_disk(size, branches, &config);
         }
 
-        if qiniu_is_enable() && post {
+        if (qiniu_is_enable() || sds_is_enable() ) && post {
             return Self::new_from_disk_v2(size, branches, &config, post);
         }
 
@@ -410,8 +409,8 @@ impl<E: Element, R: Read + Send + Sync> Store<E> for LevelCacheStore<E, R> {
         post: bool,
     ) -> Result<Self> {
         let data_path = StoreConfig::data_path(&config.path, &config.id);
-        let file = if post && qiniu_is_enable() {
-            MixFile::qiniu_open(data_path.to_str().unwrap(), E::byte_len())?
+        let file = if post && (qiniu_is_enable() || sds_is_enable()) {
+            MixFile::third_party_stores_open(data_path.to_str().unwrap(), E::byte_len())?
         } else {
             MixFile::open(data_path)?
         };
